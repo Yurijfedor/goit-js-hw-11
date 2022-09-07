@@ -21,8 +21,6 @@ export default class PixabayApiService {
       });
 
       const response = await axios.get(`${BASE_URL}?${options}`);
-      console.log(response);
-      // const collectionOfImages = response.data.hits;
       this.incrementPage();
       return response;
     } catch (error) {
@@ -44,9 +42,5 @@ export default class PixabayApiService {
 
   resetPage() {
     this.page = 1;
-  }
-
-  getNumberOfLastPage() {
-    return Math.floor(response.data.totalHits / this.per_page);
   }
 }

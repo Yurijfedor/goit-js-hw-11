@@ -1,48 +1,43 @@
 // import fetchPictures from './request-pixaby';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import PixabayApiService from './pixabay-service';
-
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 const refs = {
   formEl: document.querySelector('.search-form'),
-  galleryContainerEl: document.querySelector('.gallery_container'),
+  galleryContainerEl: document.querySelector('.gallery'),
   buttonLoadMoreEl: document.querySelector('.load-more'),
 };
 const pixabayApiService = new PixabayApiService();
-
 refs.formEl.addEventListener('submit', createGallery);
 refs.buttonLoadMoreEl.addEventListener('click', onLoadMore);
 
 function createGallery(evt) {
   evt.preventDefault();
-
+  clearLastMessage();
   pixabayApiService.query = evt.currentTarget.elements.searchQuery.value;
-
   pixabayApiService.resetPage();
   pixabayApiService
     .fetchPictures()
-    .then(respponse => {
-      console.log(respponse.data.hits);
+    .then(response => {
       onClearGallery();
-
-      const collectionOfImages = respponse.data.hits;
+      const collectionOfImages = response.data.hits;
       if (collectionOfImages.length === 0) {
         onHideBtnLoadMore();
         return Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
         );
       } else {
+        Notify.success(`Hooray! We found ${response.data.totalHits} images.`);
         renderGallery(createTemplate(collectionOfImages));
+        new SimpleLightbox('.gallery > a');
 
-        const numberOfLastPage = Math.ceil(
-          respponse.data.totalHits / pixabayApiService.per_page
-        );
-        if (pixabayApiService.page - 1 === numberOfLastPage) {
+        if (!checkIsLastpage(response)) {
+          return onshowBtnLoadMore();
+        } else {
           onHideBtnLoadMore();
-          return Notify.info(
-            'Sorry, there are no images matching your search query. Please try again.'
-          );
+          renderLastMessage();
         }
-        onshowBtnLoadMore();
       }
     })
     .catch(error => console.log(error));
@@ -60,7 +55,7 @@ function createTemplate(collectionOfImages) {
       comments,
       downloads,
     }) => {
-      const template = `<div class="photo-card">
+      const template = `<a href="${largeImageURL}"><div class="photo-card">
   <img src="${webformatURL}" alt="${tags}" loading="lazy" />
   <div class="info">
     <p class="info-item">
@@ -76,7 +71,7 @@ function createTemplate(collectionOfImages) {
       <b>Downloads: ${downloads}</b>
     </p>
   </div>
-</div>`;
+</div></a>`;
       markup += template;
     }
   );
@@ -88,8 +83,15 @@ function renderGallery(markup) {
 }
 
 function onLoadMore() {
-  pixabayApiService.fetchPictures().then(res => {
-    renderGallery(createTemplate(res.data.hits));
+  pixabayApiService.fetchPictures().then(response => {
+    renderGallery(createTemplate(response.data.hits));
+    new SimpleLightbox.refresh('.gallery > a');
+    if (!checkIsLastpage(response)) {
+      return onshowBtnLoadMore();
+    } else {
+      onHideBtnLoadMore();
+      renderLastMessage();
+    }
   });
 }
 
@@ -106,4 +108,27 @@ function onshowBtnLoadMore() {
 
 function onHideBtnLoadMore() {
   refs.buttonLoadMoreEl.classList.add('hidden');
+}
+
+function checkIsLastpage(response) {
+  const numberOfLastPage = Math.ceil(
+    response.data.totalHits / pixabayApiService.per_page
+  );
+  return pixabayApiService.page - 1 === numberOfLastPage;
+}
+
+function renderLastMessage() {
+  const message = document.createElement('b');
+  message.textContent =
+    "We're sorry, but you've reached the end of search results.";
+  message.classList.add('last-message');
+  refs.galleryContainerEl.after(message);
+}
+
+function clearLastMessage() {
+  const lastEl = document.querySelector('.last-message');
+  if (lastEl) {
+    lastEl.remove();
+  }
+  return;
 }
