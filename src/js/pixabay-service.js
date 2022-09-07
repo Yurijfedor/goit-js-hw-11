@@ -20,8 +20,9 @@ export default class PixabayApiService {
       });
 
       const response = await axios.get(`${BASE_URL}?${options}`);
+      const collectionOfImages = response.data.hits;
       this.page += 1;
-      return response;
+      return collectionOfImages;
     } catch (error) {
       console.log(error.message);
     }

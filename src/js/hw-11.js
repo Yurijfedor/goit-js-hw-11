@@ -12,7 +12,7 @@ const pixabayApiService = new PixabayApiService();
 
 refs.formEl.addEventListener('submit', renderGallery);
 
-function renderGallery(evt) {
+function createGallery(evt) {
   evt.preventDefault();
   onClearGallery();
   pixabayApiService.query = evt.currentTarget.elements.searchQuery.value;
@@ -20,24 +20,34 @@ function renderGallery(evt) {
   pixabayApiService
     .fetchPictures()
     .then(res => {
-      const collectionOfImages = res.data.hits;
-      if (collectionOfImages.length === 0) {
+      if (res.length === 0) {
         return Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
         );
       }
+      const markupGallery = createTemplate(res);
+      console.log(markupGallery);
+      // refs.galleryContainerEl.insertAdjacentHTML('beforeend', markupGallery);
+      // renderGallery(markupGallery);
+    })
+    .catch(error => console.log(error));
+}
 
-      collectionOfImages.forEach(
-        ({
-          webformatURL,
-          largeImageURL,
-          tags,
-          likes,
-          views,
-          comments,
-          downloads,
-        }) => {
-          const template = `<div class="photo-card">
+refs.buttonLoadMoreEl.addEventListener('click', onLoadMore);
+
+function createTemplate(collectionOfImages) {
+  let markup = '';
+  collectionOfImages.forEach(
+    ({
+      webformatURL,
+      largeImageURL,
+      tags,
+      likes,
+      views,
+      comments,
+      downloads,
+    }) => {
+      const template = `<div class="photo-card">
   <img src="${webformatURL}" alt="${tags}" loading="lazy" />
   <div class="info">
     <p class="info-item">
@@ -54,14 +64,15 @@ function renderGallery(evt) {
     </p>
   </div>
 </div>`;
-          refs.galleryContainerEl.insertAdjacentHTML('beforeend', template);
-        }
-      );
-    })
-    .catch(console.log);
+      markup += template;
+    }
+  );
+  return markup;
 }
 
-refs.buttonLoadMoreEl.addEventListener('click', onLoadMore);
+function renderGallery(markup) {
+  refs.galleryContainerEl.insertAdjacentHTML('beforeend', markup);
+}
 
 function onLoadMore() {}
 
