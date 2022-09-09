@@ -3,14 +3,19 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import PixabayApiService from './pixabay-service';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+import throttle from 'lodash.throttle';
+
 const refs = {
   formEl: document.querySelector('.search-form'),
   galleryContainerEl: document.querySelector('.gallery'),
   buttonLoadMoreEl: document.querySelector('.load-more'),
 };
+
 const pixabayApiService = new PixabayApiService();
+const simpleLightbox = new SimpleLightbox('.gallery > a');
+
 refs.formEl.addEventListener('submit', createGallery);
-refs.buttonLoadMoreEl.addEventListener('click', onLoadMore);
+window.addEventListener('scroll', throttle(infinityScroll, 1000));
 
 function createGallery(evt) {
   evt.preventDefault();
@@ -30,7 +35,8 @@ function createGallery(evt) {
       } else {
         Notify.success(`Hooray! We found ${response.data.totalHits} images.`);
         renderGallery(createTemplate(collectionOfImages));
-        new SimpleLightbox('.gallery > a');
+        simpleLightbox.refresh();
+        initialScroll();
 
         if (!checkIsLastpage(response)) {
           return onshowBtnLoadMore();
@@ -85,7 +91,9 @@ function renderGallery(markup) {
 function onLoadMore() {
   pixabayApiService.fetchPictures().then(response => {
     renderGallery(createTemplate(response.data.hits));
-    new SimpleLightbox.refresh('.gallery > a');
+    initialScroll();
+    simpleLightbox.refresh();
+
     if (!checkIsLastpage(response)) {
       return onshowBtnLoadMore();
     } else {
@@ -131,4 +139,24 @@ function clearLastMessage() {
     lastEl.remove();
   }
   return;
+}
+
+function initialScroll() {
+  const { height: cardHeight } =
+    refs.galleryContainerEl.firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+}
+
+function infinityScroll() {
+  const wievPortHeight = window.innerHeight;
+  const bodyHeight = document.body.offsetHeight;
+  const currentPosition = window.pageYOffset;
+  const endOfPage = wievPortHeight + currentPosition >= bodyHeight;
+  if (endOfPage) {
+    onLoadMore();
+  }
 }

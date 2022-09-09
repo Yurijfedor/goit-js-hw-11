@@ -22,6 +22,7 @@ export default class PixabayApiService {
 
       const response = await axios.get(`${BASE_URL}?${options}`);
       this.incrementPage();
+      console.log(response);
       return response;
     } catch (error) {
       console.log(error.message);
