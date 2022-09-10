@@ -1,4 +1,4 @@
-<article class="pixaby" id="uk">
+<article class="pixaby">
   <form class="search-form" id="search-form">
     <input
       type="text"
@@ -6,8 +6,18 @@
       autocomplete="off"
       placeholder="Search images..."
     />
-    <button type="submit">Search</button>
+    <button type="submit">
+      <svg class="dcsd" width="15" height="15">
+        <use href="./images/symbol-defs.svg#icon-search"></use>
+      </svg>
+    </button>
   </form>
   <div class="gallery"></div>
-  <button type="button" class="load-more hidden">Load more</button>
+  <div class="lds-ellipsis hidden">
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+  </div>
+  <!-- <button type="button" class="load-more hidden">Load more</button> -->
 </article>
